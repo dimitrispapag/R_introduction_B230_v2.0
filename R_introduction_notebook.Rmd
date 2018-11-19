@@ -179,7 +179,7 @@ Sends the output of the LHS function to the first argument of the RHS function.
 sum(1:8) %>%
   sqrt()
 
-cos(log10(rnorm(n = 100,mean = 5,10))) # Syntax with base R 
+cos(log10(rnorm(n = 100,mean = 5,10))) # Syntax with base R without using the pipe operator
 
 rnorm(n = 100,mean = 5,10) %>% log10 %>% cos() 
 
@@ -268,7 +268,7 @@ If you open the same file in excel are there any differences ??
 
 ```{r format column names}
 
-colnames(prot) <- str_replace_all(colnames(prot), "\\s",replacement = "_") ## Makes our life for later easier
+colnames(prot) <- str_replace_all(colnames(prot), "\\s",replacement = "_") ## Makes our life for later easier (Replaces space in the column names with _)
 
 colnames(prot)
 
