@@ -288,7 +288,10 @@ Four core "verbs": filter, select, arrange, group_by + summarize, plus many more
 ```{r filter}
 # Remove contaminants, reverse hits and only identified by site
 
-prot_f <- prot %>% filter(Only_identified_by_site != "+",Reverse != "+",Potential_contaminant != "+")
+prot_f <- prot %>% 
+  
+  filter(Only_identified_by_site != "+",Reverse != "+",Potential_contaminant != "+")
+
 prot_f
 ```
 
@@ -304,15 +307,25 @@ prot_f
 # Select columns that we will need for further processing
 
 prot_f1 <- prot_f %>% select(Protein_IDs,Majority_protein_IDs,
+                             
                              Protein_names,Gene_names,
+                             
                              Fasta_headers,Number_of_proteins)
 
 # Isn't there a faster way ? 
 
-prot_f1 <- prot_f %>% select(contains("Protein"),Gene_names:Number_of_proteins,
+prot_f1 <- prot_f %>% 
+  
+  select(contains("Protein"),Gene_names:Number_of_proteins,
+         
                              starts_with("Peptides_"),
+         
                              matches("^Sequence_coverage_[^[]"), `Mol._weight_[kDa]`,
-                             starts_with("Identification"),matches("Ratio_./._[^vit]"),
+         
+                             starts_with("Identification"),
+         
+         matches("Ratio_./._[^vit]"),
+         
                              matches("^Intensity_._."))
 
 ```
@@ -320,7 +333,10 @@ prot_f1 <- prot_f %>% select(contains("Protein"),Gene_names:Number_of_proteins,
 
 ```{r String extract}
 
-prot_f1 <- prot_f1 %>% mutate(Protein_IDs = str_split(Protein_IDs,";",simplify = T)[,1],
+prot_f1 <- prot_f1 %>% 
+  
+  mutate(Protein_IDs = str_split(Protein_IDs,";",simplify = T)[,1],
+         
                               Gene_names = str_split(Gene_names,";",simplify = T)[,1])
 
 
@@ -339,15 +355,26 @@ We observe that variables (both categorical and numerical are spread across the 
 
 
 Peptides_tb <- prot_f1 %>% select(Protein_IDs:Peptides_PIK3CA_5xIC50_R2) %>% 
+  
   gather(Peptides_KRAS_1xIC50_R1:Peptides_PIK3CA_5xIC50_R2 ,key = "Experiment", 
-         value = "Peptide_Number") %>% mutate(Experiment = str_remove_all(Experiment,pattern = "Peptides_"))
+         value = "Peptide_Number") %>% 
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern = "Peptides_"))
 
 
 Seq_cov_tb <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Seq")) %>% 
-  gather(starts_with("Seq") ,key = "Experiment", value = "Seq_cov_[%]") %>% mutate(Experiment = str_remove_all(Experiment,pattern = "Sequence_coverage_")) %>% mutate(Experiment = str_remove_all(Experiment,pattern ="_\\[%]"))
+  
+  gather(starts_with("Seq") ,key = "Experiment", value = "Seq_cov_[%]") %>%
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern = "Sequence_coverage_")) %>%
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern ="_\\[%]"))
 
 Id_type_tb <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ident")) %>% 
-  gather(starts_with("Ident") ,key = "Experiment", value = "Ident_type") %>% mutate(Experiment = str_remove_all(Experiment,pattern = "Identification_type_"))
+  
+  gather(starts_with("Ident") ,key = "Experiment", value = "Ident_type") %>%
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern = "Identification_type_"))
 
 ## Gather the intensities
 
@@ -410,7 +437,9 @@ Silac_tb_norm_HL <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ra
 
 ## M/L
 
-Silac_tb_norm_ML <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ratio"),-("Ratio_M/L_normalized":"Ratio_H/M_count")) %>% 
+Silac_tb_norm_ML <- prot_f1 %>%
+  
+  select(Protein_IDs:Fasta_headers,starts_with("Ratio"),-("Ratio_M/L_normalized":"Ratio_H/M_count")) %>% 
   
   gather(contains("M/L_normalized"),key = "Experiment",value = "Ratio_norm_M/L") %>% 
   
@@ -432,7 +461,9 @@ Silac_tb_norm_HM <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ra
 
 ### Gather the Silac_ratios
 
-Silac_tb_norm <- left_join(Silac_tb_norm_HL,Silac_tb_norm_ML) %>% left_join(Silac_tb_norm_HM)
+Silac_tb_norm <- left_join(Silac_tb_norm_HL,Silac_tb_norm_ML) %>%
+  
+  left_join(Silac_tb_norm_HM)
 
 
 ```
@@ -487,13 +518,22 @@ table_merg %>% group_by(Experiment) %>%  summarize(Peptides = sum(Peptide_Number
 
 ### Why the petide numbers are completely off ??
 
-table_merg %>% filter(Gene_names == "CTCF") %>% group_by(Experiment,Gene_names,Ident_type)  %>% summarize(Peptides = sum(Peptide_Number)) %>% arrange(desc(Peptides))
+table_merg %>% filter(Gene_names == "CTCF") %>%
+  
+  group_by(Experiment,Gene_names,Ident_type)  %>% 
+  
+  summarize(Peptides = sum(Peptide_Number)) %>% 
+  
+  arrange(desc(Peptides))
 
 
  table_merg %>% 
    group_by(Gene_names,Experiment,Ident_type,Intensity_L,Intensity_M,Intensity_H) %>% 
+   
    filter(Ident_type == "By matching",Gene_names == "DDX39A") %>% 
+   
    summarize(Peptides = sum(Peptide_Number)) %>% 
+   
    arrange(desc(Peptides))
 
 
