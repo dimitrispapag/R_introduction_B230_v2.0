@@ -3,8 +3,8 @@ title: "R introduction using tidyverse"
 author: "Dimitris Papageorgiou"
 date: "November 4, 2018"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
   word_document: default
 ---
 
@@ -119,7 +119,8 @@ isTRUE(x)	 test if X is TRUE
 
 cos(45)^2 + sin(45)^2 
 
-x <- log2(8) ; y <- "R introduction" ## Assign value to a variable (in RStudio use Alt and - to create the assign symbol)
+x <- log2(8) ; y <- "R introduction" ## Assign value to a variable 
+#(in RStudio use Alt and - to create the assign symbol)
 
 x ; y ## Print the x and y  values
 
@@ -238,7 +239,8 @@ Irrespectively of the MQ version the output files are all in txt format.
 prot <- read.table("C:/Users/jimpa/Documents/R_projects/R_introduction_B230/proteinGroups_Kar_081118.txt", header=TRUE, sep="\t",stringsAsFactors = F)
 
 
-#system.time(prot <- read.table("C:/Users/papageor/OneDrive/R_files/proteinGroups_Kar_081118.txt", header=TRUE, sep="\t"))
+#system.time(prot <- read.table(
+#"C:/Users/papageor/OneDrive/R_files/proteinGroups_Kar_081118.txt", header=TRUE, sep="\t"))
 
 #prot <- read_tsv(choose.files(),na = "NaN")
 
@@ -268,7 +270,9 @@ If you open the same file in excel are there any differences ??
 
 ```{r format column names}
 
-colnames(prot) <- str_replace_all(colnames(prot), "\\s",replacement = "_") ## Makes our life for later easier (Replaces space in the column names with _)
+colnames(prot) <- str_replace_all(colnames(prot), "\\s",replacement = "_") 
+
+## Makes our life for later easier (Replaces space in the column names with _)
 
 colnames(prot)
 
@@ -299,13 +303,17 @@ prot_f
 
 # Select columns that we will need for further processing
 
-prot_f1 <- prot_f %>% select(Protein_IDs,Majority_protein_IDs,Protein_names,Gene_names,
+prot_f1 <- prot_f %>% select(Protein_IDs,Majority_protein_IDs,
+                             Protein_names,Gene_names,
                              Fasta_headers,Number_of_proteins)
 
 # Isn't there a faster way ? 
 
-prot_f1 <- prot_f %>% select(contains("Protein"),Gene_names:Number_of_proteins, starts_with("Peptides_"), matches("^Sequence_coverage_[^[]"), `Mol._weight_[kDa]`,
-starts_with("Identification"),matches("Ratio_./._[^vit]"), matches("^Intensity_._."))
+prot_f1 <- prot_f %>% select(contains("Protein"),Gene_names:Number_of_proteins,
+                             starts_with("Peptides_"),
+                             matches("^Sequence_coverage_[^[]"), `Mol._weight_[kDa]`,
+                             starts_with("Identification"),matches("Ratio_./._[^vit]"),
+                             matches("^Intensity_._."))
 
 ```
 ### Split Protein IDs and Gene names
@@ -331,7 +339,8 @@ We observe that variables (both categorical and numerical are spread across the 
 
 
 Peptides_tb <- prot_f1 %>% select(Protein_IDs:Peptides_PIK3CA_5xIC50_R2) %>% 
-  gather(Peptides_KRAS_1xIC50_R1:Peptides_PIK3CA_5xIC50_R2 ,key = "Experiment", value = "Peptide_Number") %>% mutate(Experiment = str_remove_all(Experiment,pattern = "Peptides_"))
+  gather(Peptides_KRAS_1xIC50_R1:Peptides_PIK3CA_5xIC50_R2 ,key = "Experiment", 
+         value = "Peptide_Number") %>% mutate(Experiment = str_remove_all(Experiment,pattern = "Peptides_"))
 
 
 Seq_cov_tb <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Seq")) %>% 
