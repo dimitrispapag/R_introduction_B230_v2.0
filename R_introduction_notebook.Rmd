@@ -1,0 +1,686 @@
+---
+title: "R introduction using tidyverse"
+author: "Dimitris Papageorgiou"
+date: "November 4, 2018"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##References
+
+A lot of this materials was based on material from: 
+
+* Hadley Wickham
+* Michael Levy
+
+## Tidyverse and R
+When we do data analysis the usual steps we follow are:  
+1. Import data  
+2. Tidy up  
+3. Transform data (select, filter, transform)  
+4. Visualize / Analyze  
+5. Model  
+6. Export and/or communicate  
+
+
+**All the steps above need to be done in a consistent and reproducible way**
+
+
+## The very beginning  
+1. What is R / Rstudio  
+2. Explanation of the window panes in R studio  
+3. R code 
+4. An R package is a collection of functions, data, and documentation that extends the capabilities of base R: **install.packages(tidyverse)**  
+5. In the begining of every session use the **library("tidyverse")**  
+
+## What is the tidyverse?
+
+~~Hadleyverse~~      **Hadley Wickam** 
+
+The tidyverse is a suite of R tools that follow a tidy philosophy:
+
+### Tidy data
+
+Put data in data frames  
+
+- Each type of observation gets a data frame
+- Each variable gets a column
+- Each observation gets a row
+
+
+Suite of ~20 packages that provide consistent, user-friendly, smart-default tools to do most of what most people do in R.
+
+- Core packages: ggplot2, dplyr, tidyr, readr, purrr, tibble
+- Specialized data manipulation: hms, stringr, lubridate, forcats
+- Data import: DBI, haven, httr, jsonlite, readxl, rvest, xml2
+- Modeling: modelr, broom
+
+
+## Bioconductor
+
+```{r Install Limma package, echo=T}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("limma", version = "3.8")
+
+
+```
+
+```{r Load packages,echo=T}
+
+##Load the necessary packages
+
+if (!require("tidyverse",quietly = TRUE))
+  install.packages("tidyverse")
+library("tidyverse")
+
+if (!require("readxl",quietly = TRUE))
+  install.packages("readxl")
+library("readxl") ## Package for importing xls and xlsx files
+```
+## Coding Basics  
+
+### R operators
+
+#### Arithmetic
+Operator	Description
+-------- ----------- 
++      	    addition
+-      	    subtraction
+*      	    multiplication
+/      	 division
+^ or **	 exponentiation
+x %% y 	 modulus (x mod y) 5%%2 is 1
+x %/% y 	 integer division 5%/%2 is 2
+
+#### Logical
+
+Operator	Description
+--------  -----------
+<	         less than
+<=	       less than or equal to
+>	         greater than
+>=	       greater than or equal to
+==	       exactly equal to
+!=	       not equal to
+!x	       Not x
+x | y	     x OR y
+x & y	     x AND y
+isTRUE(x)	 test if X is TRUE
+
+```{r Coding Basics, echo=TRUE}
+
+2^3
+
+cos(45)^2 + sin(45)^2 
+
+x <- log2(8) ; y <- "R introduction" ## Assign value to a variable (in RStudio use Alt and - to create the assign symbol)
+
+x ; y ## Print the x and y  values
+
+d <- rnorm(10,mean = 0, sd = 1) # Almost everything in R is a function
+
+d <- c(d,5,20)
+
+d <- c(d,"Karim")
+```
+## Data Structures in R 
+Homogeneous   | Heterogenous
+------------  |--------------
+vectors       | data frames (or tibbles)
+matrix        | lists 
+array         |
+
+```{r Data structures, echo=T}
+
+v1 <- c(5,10,20) ; v1 # Vector 1 
+
+v2 <- c(30,40,50) ;v2 # Vector 2
+
+m1 <- matrix(data = c(v1,v2),nrow=3,ncol = 4,byrow = F) # What will happen if I define byrow=True ?
+m1
+
+dat1 <- data.frame(v1,v2)
+
+daf <- as_tibble(diamonds)
+
+### Transposable tibble
+
+tribble(   
+~x, ~y, ~z,
+#--|--|----
+"a", 2, 3.6,
+"b", 1, 8.5
+)
+
+
+### You can store everything in a list 
+List1 <- list(c("a,b,c"),dat1,daf)
+
+```
+## Subsetting using base R 
+
+```{r Subsetting using base R, echo=T}
+
+diamonds[1:3,5:7] ## We will focus later on this using dplyr package
+
+```
+
+## One pipe to rule them all `%>%` magrittr
+
+Sends the output of the LHS function to the first argument of the RHS function.
+
+```{r pipe}
+sum(1:8) %>%
+  sqrt()
+
+cos(log10(rnorm(n = 100,mean = 5,10))) # Syntax with base R 
+
+rnorm(n = 100,mean = 5,10) %>% log10 %>% cos() 
+
+
+### How is the pipe incorporated for functions with multiple arguments
+
+sum(1:8) %>% sqrt() %>% rnorm(n=20,mean=.,sd=.) ### Just subsitute the dot in the argument
+
+```
+## Set seed function
+
+Set the seed of R‘s random number generator, which is useful for creating simulations or random objects that can be reproduced.
+
+```{r Set seed}
+
+rnorm(5) ## Gives random numbers everytime it is executed
+
+## Set seed produces the same random numbers all the time ##
+set.seed(123)
+rnorm (5)
+
+## If you run the rnorm only you get the same sequence of random numbers when the seed is set.
+
+## If you want to reset the seed just 
+
+set.seed(Sys.time()) ## everytime it gets a different number
+rnorm (5)
+
+```
+
+
+## Importing data into R 
+
+We will depend on **readr** and **readxl** instead of the base R functions instead of using the base R code
+
+* ** read_csv() ** reads comma-delimited files
+* ** read_csv2() ** reads semicolon-separated files
+* ** read_tsv() ** reads tab-delimited files
+* ** read_delim() ** read_delim()
+* ** read_xls() ** "old excel files"         **AVOID IMPORTING EXCEL FILES**     
+* ** read_xlsx() ** "newer excel files"
+
+### Maxquant output files 
+
+Irrespectively of the MQ version the output files are all in txt format. 
+
+```{r Import proteinGroups.txt}
+
+## Using base R 
+
+#prot <- read.table(choose.files(), header=TRUE, sep="\t") ## Why this is bad ??
+
+
+### Select the location in your computer of where your file is located
+
+prot <- read.table("C:/Users/jimpa/Documents/R_projects/R_introduction_B230/proteinGroups_Kar_081118.txt", header=TRUE, sep="\t",stringsAsFactors = F)
+
+
+#system.time(prot <- read.table("C:/Users/papageor/OneDrive/R_files/proteinGroups_Kar_081118.txt", header=TRUE, sep="\t"))
+
+#prot <- read_tsv(choose.files(),na = "NaN")
+
+#system.time(prot <- read_tsv(file = "C:/Users/papageor/OneDrive/R_files/proteinGroups_Kar_081118.txt"))
+
+### Select the location in your computer of where your file is located
+
+prot <- read_tsv(file = "C:/Users/jimpa/Documents/R_projects/R_introduction_B230/proteinGroups_Kar_081118.txt", na = "NaN")
+
+```
+If you open the same file in excel are there any differences ??
+
+## Tidy Data
+
+* **The first step is always to figure out what the variables and observations are**
+
+* **Solve two usual problems:**
+
+    + **One variable might be spread across multiple columns**
+    
+    + **One observation might be scattered across multiple rows**
+
+*Is proteingroups.txt from MQ in a tidy data format ?* 
+
+
+## Tidy proteingroups.txt
+
+```{r format column names}
+
+colnames(prot) <- str_replace_all(colnames(prot), "\\s",replacement = "_") ## Makes our life for later easier
+
+colnames(prot)
+
+```
+### dplyr
+
+Common data(frame) manipulation tasks. 
+
+Four core "verbs": filter, select, arrange, group_by + summarize, plus many more convenience functions. 
+
+### Filter
+
+```{r filter}
+# Remove contaminants, reverse hits and only identified by site
+
+prot_f <- prot %>% filter(Only_identified_by_site != "+",Reverse != "+",Potential_contaminant != "+")
+prot_f
+```
+
+### Select
+- starts_with("abc") matches names that begin with “abc”
+- ends_with("xyz") matches names that end with “xyz”
+- contains("ijk") matches names that contain “ijk”
+- matches("(.)\\1") selects variables that match a regular expression. 
+- num_range("x", 1:3) matches x1 , x2 , and x3 
+
+```{r select}
+
+# Select columns that we will need for further processing
+
+prot_f1 <- prot_f %>% select(Protein_IDs,Majority_protein_IDs,Protein_names,Gene_names,
+                             Fasta_headers,Number_of_proteins)
+
+# Isn't there a faster way ? 
+
+prot_f1 <- prot_f %>% select(contains("Protein"),Gene_names:Number_of_proteins, starts_with("Peptides_"), matches("^Sequence_coverage_[^[]"), `Mol._weight_[kDa]`,
+starts_with("Identification"),matches("Ratio_./._[^vit]"), matches("^Intensity_._."))
+
+```
+### Split Protein IDs and Gene names
+
+```{r String extract}
+
+prot_f1 <- prot_f1 %>% mutate(Protein_IDs = str_split(Protein_IDs,";",simplify = T)[,1],
+                              Gene_names = str_split(Gene_names,";",simplify = T)[,1])
+
+
+
+##prot_f1$Protein_IDs <- str_split(string = prot_f1$Protein_IDs, pattern = ";",simplify = T)[,1]
+#prot_f1$Gene_names <- str_split(string = prot_f1$Gene_names, pattern = ";",simplify = T)[,1]
+```
+
+### Tidying up the variables
+
+We observe that variables (both categorical and numerical are spread across the table)
+
+
+
+```{r Gather function}
+
+
+Peptides_tb <- prot_f1 %>% select(Protein_IDs:Peptides_PIK3CA_5xIC50_R2) %>% 
+  gather(Peptides_KRAS_1xIC50_R1:Peptides_PIK3CA_5xIC50_R2 ,key = "Experiment", value = "Peptide_Number") %>% mutate(Experiment = str_remove_all(Experiment,pattern = "Peptides_"))
+
+
+Seq_cov_tb <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Seq")) %>% 
+  gather(starts_with("Seq") ,key = "Experiment", value = "Seq_cov_[%]") %>% mutate(Experiment = str_remove_all(Experiment,pattern = "Sequence_coverage_")) %>% mutate(Experiment = str_remove_all(Experiment,pattern ="_\\[%]"))
+
+Id_type_tb <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ident")) %>% 
+  gather(starts_with("Ident") ,key = "Experiment", value = "Ident_type") %>% mutate(Experiment = str_remove_all(Experiment,pattern = "Identification_type_"))
+
+## Gather the intensities
+
+Intensity_tb_L <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Intensity")) %>% 
+  
+  gather(starts_with("Intensity_L") ,key = "Experiment", value = "Intensity_L") %>% 
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern = "Intensity_L_")) %>%
+    
+  select(Protein_IDs:Fasta_headers,Experiment:Intensity_L)
+
+
+Intensity_tb_M <-  prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Intensity")) %>% 
+  
+  gather(starts_with("Intensity_M") ,key = "Experiment", value = "Intensity_M") %>% 
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern = "Intensity_M_")) %>% 
+  
+    select(Protein_IDs:Fasta_headers,Experiment:Intensity_M)
+
+  
+ Intensity_tb_H <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Intensity")) %>% 
+   
+   gather(starts_with("Intensity_H") ,key = "Experiment", value = "Intensity_H") %>% 
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern = "Intensity_H_")) %>% 
+  
+  select(Protein_IDs:Fasta_headers,Experiment:Intensity_H)
+  
+ 
+ Intensity_tb <- left_join(Intensity_tb_L,Intensity_tb_M) %>% left_join(Intensity_tb_H)
+  
+ 
+
+#%>% 
+  #mutate(Channel = if_else(str_detect(Experiment,"\\_L_")==TRUE,"Light",
+   #                      if_else(str_detect(Experiment,"\\_M_")==TRUE,"Medium","Heavy")),
+    #  Experiment = str_remove_all(Experiment,pattern = "Intensity_._"))
+
+
+
+##Intensity_tb <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Intensity")) %>% 
+  ##gather(starts_with("Intensity") ,key = "Experiment", value = "Intensity") %>% 
+  ##mutate(Channel = if_else(str_detect(Experiment,"\\_L_")==TRUE,"Light",
+    ##                      if_else(str_detect(Experiment,"\\_M_")==TRUE,"Medium","Heavy")),
+      ## Experiment = str_remove_all(Experiment,pattern = "Intensity_._"))
+ 
+ 
+######## Normalized Silac Ratios ##################
+#### H/L
+
+Silac_tb_norm_HL <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ratio"),-("Ratio_M/L_normalized":"Ratio_H/M_count")) %>% 
+  
+  gather(contains("H/L_normalized"),key = "Experiment",value = "Ratio_norm_H/L") %>% 
+  
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern = "Ratio_H/L_normalized_")) %>%
+  
+  select(Protein_IDs:Fasta_headers,Experiment:"Ratio_norm_H/L")
+
+## M/L
+
+Silac_tb_norm_ML <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ratio"),-("Ratio_M/L_normalized":"Ratio_H/M_count")) %>% 
+  
+  gather(contains("M/L_normalized"),key = "Experiment",value = "Ratio_norm_M/L") %>% 
+  
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern = "Ratio_M/L_normalized_")) %>%
+  
+  select(Protein_IDs:Fasta_headers,Experiment:"Ratio_norm_M/L")
+
+## H/M
+
+Silac_tb_norm_HM <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ratio"),-("Ratio_M/L_normalized":"Ratio_H/M_count")) %>% 
+  
+  gather(contains("H/M_normalized"),key = "Experiment",value = "Ratio_norm_H/M") %>% 
+  
+  
+  mutate(Experiment = str_remove_all(Experiment,pattern = "Ratio_H/M_normalized_")) %>%
+  
+  select(Protein_IDs:Fasta_headers,Experiment:"Ratio_norm_H/M")
+
+### Gather the Silac_ratios
+
+Silac_tb_norm <- left_join(Silac_tb_norm_HL,Silac_tb_norm_ML) %>% left_join(Silac_tb_norm_HM)
+
+
+```
+
+### Speed up the tidying up of the variables with gather and spread
+
+```{r Gather and Spread}
+
+### Fix the counts
+  
+Silac_tb_count <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ratio"),-("Ratio_M/L_normalized":"Ratio_H/M_count")) %>%
+  
+  gather(contains("count"),key = "Experiment",value = "Ratio_count") %>%
+  
+ ### mutate(Ratio_type = if_else(str_detect(Experiment,"\\_H/L_")==TRUE,"H/L",
+                             ### if_else(str_detect(Experiment,"\\_M/L_")==TRUE,"M/L","H/M"))) %>%
+  
+  select(Protein_IDs:Fasta_headers,Experiment:Ratio_count) %>%
+  
+  extract(Experiment, c("Ratio_type","Experiment"),"([^.].{15})(.*)") %>%
+  
+  spread(Ratio_type,value = Ratio_count)
+
+
+### Tidy the not normalized value
+
+Silac_tb_unnorm <- prot_f1 %>% select(Protein_IDs:Fasta_headers,starts_with("Ratio"),-("Ratio_M/L_normalized":"Ratio_H/M_count"))%>%  
+  gather(seq(from = 7,to = 76, by = 3),key = "Experiment",value = "Ratio_unnorm") %>%
+  
+  select(Protein_IDs:Fasta_headers,Experiment:Ratio_unnorm) %>%
+  
+   extract(Experiment, c("Ratio_type","Experiment"),"([^.].{9})(.*)") %>%
+  
+  spread(Ratio_type,value = Ratio_unnorm)
+
+### Create our final table
+
+table_merg <- left_join(Silac_tb_norm,Silac_tb_count) %>% 
+  left_join(Silac_tb_unnorm) %>% left_join(Intensity_tb) %>% left_join(Peptides_tb) %>%
+  left_join(Id_type_tb) %>% left_join(Seq_cov_tb)
+  
+```
+
+## Data exploration 
+
+### Excel Comparison
+
+```{r Data exploration}
+
+table_merg %>% group_by(Experiment) %>%  summarize(Peptides = sum(Peptide_Number)) 
+
+
+### Why the petide numbers are completely off ??
+
+table_merg %>% filter(Gene_names == "CTCF") %>% group_by(Experiment,Gene_names,Ident_type)  %>% summarize(Peptides = sum(Peptide_Number)) %>% arrange(desc(Peptides))
+
+
+ table_merg %>% 
+   group_by(Gene_names,Experiment,Ident_type,Intensity_L,Intensity_M,Intensity_H) %>% 
+   filter(Ident_type == "By matching",Gene_names == "DDX39A") %>% 
+   summarize(Peptides = sum(Peptide_Number)) %>% 
+   arrange(desc(Peptides))
+
+
+table_merg %>% group_by(Gene_names,Experiment) %>% filter (Gene_names == "SUZ12") %>% select (`Seq_cov_[%]`) %>% arrange(desc(`Seq_cov_[%]`))
+
+```
+
+```{r Export table}
+
+write_tsv(table_merg,"table_merg.txt",na = "NA")
+
+```
+
+### You can also save to clipboard 
+
+Instead of specifying a path just add "clipboard"
+
+## Introduction to ggplot2 
+
+Basic concepts of ggplot:
+
+```{r Visualize_data}
+
+ggplot(data = table_merg) + 
+  geom_histogram(mapping = aes(x = `Ratio_norm_M/L`,fill = Experiment),position = "dodge") 
+
+
+ggplot(data = table_merg) + 
+  geom_histogram(mapping = aes(x = `Ratio_norm_M/L`),bins = 40)+
+  facet_wrap(~Experiment,ncol = 2)
+
+## ggplot can handle missing values
+
+```
+
+Appears that our data are not following a normal distribution. Log transform
+
+
+```{r log transform data, echo=TRUE}
+
+ggplot(data = table_merg) + 
+  geom_histogram(mapping = aes(x = log2(`Ratio_M/L_`)),bins = 50) +
+  facet_wrap(~Experiment,ncol = 2)
+
+
+ggplot(data = table_merg) + 
+  geom_density(mapping = aes(x = log2(`Ratio_M/L_`))) +
+  facet_grid(Ident_type ~ Experiment)
+
+library("ggrepel") ### Quick way of adding labels to plots 
+
+ggplot(data = table_merg,aes(x = log2(`Ratio_M/L_`) , y = log2(`Ratio_H/L_`))) +
+  
+  geom_point(alpha = 0.25) +
+  
+    geom_point(data = table_merg %>% filter(log2(`Ratio_M/L_`)>4 & log2(`Ratio_H/L_`) >4), color = "red" )+
+  
+  geom_text_repel(data = table_merg %>% filter(log2(`Ratio_M/L_`)>4 & log2(`Ratio_H/L_`) >4), mapping = aes(label = Gene_names),size =3)+
+facet_wrap(~Experiment,ncol = 2.5)                         
+
+```
+
+
+## Loops
+```{r for loops}
+
+means <- vector ("double",ncol(table_merg %>% group_by(Experiment)))
+for (i in seq_along(table_merg)) {
+  means[[i]] <- mean(table_merg[[i]], na.rm = T)
+}
+print(means)
+
+
+medians <- vector ("double",ncol(table_merg))
+for (i in seq_along(table_merg)) {
+  medians[[i]] <- median(table_merg[[i]], na.rm = T)
+}
+
+print(medians)
+```
+
+** Avoid using for loops **
+
+### Use the Purrr package instead
+
+`purrr` is kind of like `dplyr` for lists. It helps you repeatedly apply functions.
+
+```{r Purrr}
+library("purrr")
+```
+
+`map` is a slightly improved version of `lapply` and it is quite powerfull and only returns a list 
+
+```{r map}
+
+map(1:4, log)
+
+map(1:4, log, base = 2) # Argument
+
+map(1:4, ~ log(4, base = .x)) # formula, map(1:4, function(x) log(4, base = x))
+
+map_dbl(c(1:4,0), log, base = 2)
+
+
+means <- map_dbl(mtcars,mean)
+medians <- map_dbl(mtcars,median)
+
+```
+
+## Transform the data frame filter missing values
+
+```{r Transformation, echo=TRUE}
+
+table_merg_f <- table_merg %>% mutate_at(vars(`Ratio_norm_H/L`:`Ratio_norm_H/M`,`Ratio_H/L_`:`Ratio_M/L_`) ,log2) %>% 
+  mutate_at(vars(Intensity_L:Intensity_H),log10)
+
+## Change NaN and -Inf to NAs 
+
+#install.packages("naniar")
+library("naniar")
+
+table_merg_f <- table_merg_f %>% replace_with_na_all(condition = ~.x == -Inf)  ### Easy to do but quite slow
+   
+
+is.na(table_merg_f) <- sapply(table_merg_f,is.infinite)
+
+```
+
+##More Visualization
+
+###Boxplots
+
+```{r Boxplots}
+
+ggplot(data = table_merg_f, aes(x =  Experiment ,y = `Ratio_norm_H/L`,fill = Experiment))+
+  geom_boxplot()
+
+ggplot(data = table_merg_f, aes(x =  Experiment ,y = `Ratio_norm_H/L`,fill = Experiment))+
+  geom_violin()
+
+
+###Bimodal distribution 
+
+x1 <-  rnorm(100,mean=0 ,sd=1)
+x2 <-  rnorm (200, mean=5, sd = 3)
+x3 <- data_frame(c(x1,x2))
+
+ggplot(data = x3, aes(x= "test",y = x3$`c(x1, x2)`))+
+  geom_violin()
+
+ ggplot(data = table_merg_f %>% filter(str_detect(Experiment,"R1")),aes(x =  Experiment ,y = `Ratio_norm_H/L`,fill = Experiment))+
+  geom_boxplot()
+
+```
+
+### Quick visualization
+
+```{r Visualization plots}
+
+table_merg_f %>%
+  keep(is.numeric) %>% 
+  gather() %>% 
+  ggplot(aes(value)) +
+    facet_wrap(~ key, scales = "free") +
+    geom_histogram()
+
+prot_f1 %>% keep(is.numeric) %>%
+  gather() %>% ggplot(aes(value))+
+  facet_wrap(~ key, scales = "free") +
+    geom_histogram()
+
+### R scatter plots
+
+table_merg_f <-  table_merg_f %>% mutate (Replicate = ifelse(str_detect(Experiment,"R1"),paste("R1"),"R2"))
+
+library("GGally")
+
+table_merg_f %>% select(Protein_IDs, Experiment,`Ratio_norm_H/L`) %>% spread(key = "Experiment",value =`Ratio_norm_H/L`) %>%  ggpairs(2:9)
+
+
+table_merg_f %>% select(Protein_IDs, Experiment,`Ratio_norm_M/L`) %>% spread(key = "Experiment",value =`Ratio_norm_M/L`) %>%  ggpairs(2:9)
+
+table_merg_f %>% select(Protein_IDs, Experiment,`Ratio_norm_H/M`) %>% spread(key = "Experiment",value =`Ratio_norm_H/M`) %>%  ggpairs(2:9)
+
+```
+
+
+```{r Functions of data}
+
+funs <- list(mean, median ,sd) # In R you can store everything in a list
+
+  funs %>% map(~table_merg_f%>% map_dbl(.x ),.funs)
+
+```
+
+## If we end up having more time we will continue with more exploratory data analysis and ploting stuff
+
+
+
