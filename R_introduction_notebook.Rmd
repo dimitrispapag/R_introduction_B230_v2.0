@@ -615,7 +615,8 @@ table_merg_f <- table_merg %>% mutate_at(vars(`Ratio_norm_H/L`:`Ratio_norm_H/M`,
 #install.packages("naniar")
 library("naniar")
 
-table_merg_f <- table_merg_f %>% replace_with_na_all(condition = ~.x == -Inf)  ### Easy to do but quite slow
+table_merg_f <- table_merg_f %>% replace_with_na_all(condition = ~.x == -Inf)  
+### Easy to do but quite slow
    
 
 is.na(table_merg_f) <- sapply(table_merg_f,is.infinite)
