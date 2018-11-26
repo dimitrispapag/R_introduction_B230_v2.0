@@ -239,8 +239,8 @@ Irrespectively of the MQ version the output files are all in txt format.
 prot <- read.table("C:/Users/jimpa/Documents/R_projects/R_introduction_B230/proteinGroups_Kar_081118.txt", header=TRUE, sep="\t",stringsAsFactors = F)
 
 
-#system.time(prot <- read.table(
-#"C:/Users/papageor/OneDrive/R_files/proteinGroups_Kar_081118.txt", header=TRUE, sep="\t"))
+system.time(prot <- read.table(
+"C:/Users/jimpa/Documents/R_projects/R_introduction_B230/proteinGroups_Kar_081118.txt", header=TRUE, sep="\t"))
 
 #prot <- read_tsv(choose.files(),na = "NaN")
 
@@ -248,7 +248,7 @@ prot <- read.table("C:/Users/jimpa/Documents/R_projects/R_introduction_B230/prot
 
 ### Select the location in your computer of where your file is located
 
-prot <- read_tsv(file = "C:/Users/jimpa/Documents/R_projects/R_introduction_B230/proteinGroups_Kar_081118.txt", na = "NaN")
+system.time(prot <- read_tsv(file = "C:/Users/jimpa/Documents/R_projects/R_introduction_B230/proteinGroups_Kar_081118.txt", na = "NaN"))
 
 ```
 If you open the same file in excel are there any differences ??
@@ -335,7 +335,7 @@ prot_f1 <- prot_f %>%
 
 prot_f1 <- prot_f1 %>% 
   
-  mutate(Protein_IDs = str_split(Protein_IDs,";",simplify = T)[,1],
+  mutate(Protein_IDs = str_split(Protein_IDs,";",simplify = TRUE)[,1],
          
                               Gene_names = str_split(Gene_names,";",simplify = T)[,1])
 
