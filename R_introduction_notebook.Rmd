@@ -66,8 +66,7 @@ Suite of ~20 packages that provide consistent, user-friendly, smart-default tool
 ```{r Install Limma package, echo=T}
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install("limma", version = "3.8")
-
+library("limma")
 
 ```
 
@@ -248,10 +247,11 @@ system.time(prot <- read.table(
 
 ### Select the location in your computer of where your file is located
 
-system.time(prot <- read_tsv(file = "C:/Users/jimpa/Documents/R_projects/R_introduction_B230/proteinGroups_Kar_081118.txt", na = "NaN"))
+system.time(prot <- read_tsv(file = "C:/Users/jimpa/Documents/R_projects/R_introduction_B230_v2.0/proteinGroups_Kar_081118.txt",na = "NaN", col_types = cols(Reverse = col_character())))
 
 ```
-If you open the same file in excel are there any differences ??
+
+In the new version of readr 1.2.1 for some reason the Reversed column is not parsed (read) properly. In the older versions it was read as character but in this one it is read as logical. For this reason we need to manually define how to parse this column by including the argument col_types = cols(Reverse = col_character()))
 
 ## Tidy Data
 
